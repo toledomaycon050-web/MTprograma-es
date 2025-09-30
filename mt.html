@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MT Programações - Sistema de Tarefas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        .theme-dark {
+            --bg-primary: #1e293b;
+            --bg-secondary: #334155;
+            --bg-card: #475569;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --accent: #3b82f6;
+        }
+        
+        .theme-light {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #e2e8f0;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent: #3b82f6;
+        }
+        
+        .theme-blue {
+            --bg-primary: #1e3a8a;
+            --bg-secondary: #1e40af;
+            --bg-card: #3730a3;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --accent: #60a5fa;
+        }
+        
+        .themed {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .card-themed {
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+        }
+        
+        .text-secondary-themed {
+            color: var(--text-secondary);
+        }
+        
+        .accent-themed {
+            background-color: var(--accent);
+        }
+        
+        .border-themed {
+            border-color: var(--text-secondary);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        
+        .priority-high { border-left: 4px solid #ef4444; }
+        .priority-medium { border-left: 4px solid #f59e0b; }
+        .priority-low { border-left: 4px solid #10b981; }
+        
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .status-progress { background-color: #dbeafe; color: #1e40af; }
+        .status-completed { background-color: #d1fae5; color: #065f46; }
+        .status-overdue { background-color: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body class="themed theme-blue min-h-screen">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="card-themed rounded-lg shadow-xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold mb-2">MT Programações</h1>
+                <p class="text-secondary-themed">Sistema de Gerenciamento de Tarefas</p>
+            </div>
+            
+            <div id="loginForm">
+                <h2 class="text-xl font-semibold mb-6">Fazer Login</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Email</label>
+                        <input type="email" id="loginEmail" class="w-full p-3 rounded border border-themed bg-transparent" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Senha</label>
+                        <input type="password" id="loginPassword" class="w-full p-3 rounded border border-themed bg-transparent" required>
+                    </div>
+                    <button type="submit" class="w-full accent-themed text-white p-3 rounded font-medium hover:opacity-90 transition-opacity">
+                        Entrar
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <button onclick="showRegisterForm()" class="text-secondary-themed hover:underline">
+                        Não tem conta? Cadastre sua empresa
+                    </button>
+                </div>
+            </div>
+            
+            <div id="registerForm" class="hidden">
+                <h2 class="text-xl font-semibold mb-6">Cadastrar Empresa</h2>
+                <form onsubmit="handleRegister(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Nome da Empresa</label>
+                        <input type="text" id="companyName" class="w-full p-3 rounded border border-themed bg-transparent" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Email do Administrador</label>
+                        <input type="email" id="adminEmail" class="w-full p-3 rounded border border-themed bg-transparent" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Nome do Administrador</label>
+                        <input type="text" id="adminName" class="w-full p-3 rounded border border-themed bg-transparent" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Senha</label>
+                        <input type="password" id="adminPassword" class="w-full p-3 rounded border border-themed bg-transparent" required>
+                    </div>
+                    <button type="submit" class="w-full accent-themed text-white p-3 rounded font-medium hover:opacity-90 transition-opacity">
+                        Cadastrar Empresa
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <button onclick="showLoginForm()" class="text-secondary-themed hover:underline">
+                        Já tem conta? Fazer login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="hidden min-h-screen">
+        <!-- Header -->
+        <header class="card-themed shadow-sm border-b border-themed">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-4">
+                        <h1 class="text-2xl font-bold">MT Programações</h1>
+                        <span id="companyNameDisplay" class="text-secondary-themed"></span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <select id="themeSelector" onchange="changeTheme()" class="p-2 rounded border border-themed bg-transparent">
+                            <option value="theme-blue">Azul Escuro</option>
+                            <option value="theme-dark">Escuro</option>
+                            <option value="theme-light">Claro</option>
+                        </select>
+                        <button onclick="showUserModal()" class="accent-themed text-white px-4 py-2 rounded hover:opacity-90">
+                            Usuários
+                        </button>
+                        <span id="currentUserName" class="text-secondary-themed"></span>
+                        <button onclick="logout()" class="text-secondary-themed hover:underline">Sair</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Quick Actions -->
+            <div class="mb-8">
+                <div class="flex flex-wrap gap-4">
+                    <button onclick="showTaskModal()" class="accent-themed text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
+                        + Nova Tarefa
+                    </button>
+                    <button onclick="showDailyTaskModal()" class="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors">
+                        + Tarefa Diária
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="mb-6 flex flex-wrap gap-4">
+                <select id="statusFilter" onchange="filterTasks()" class="p-2 rounded border border-themed bg-transparent">
+                    <option value="">Todos os Status</option>
+                    <option value="pending">Pendente</option>
+                    <option value="progress">Em Progresso</option>
+                    <option value="completed">Concluída</option>
+                    <option value="overdue">Atrasada</option>
+                </select>
+                <select id="priorityFilter" onchange="filterTasks()" class="p-2 rounded border border-themed bg-transparent">
+                    <option value="">Todas as Prioridades</option>
+                    <option value="high">Alta</option>
+                    <option value="medium">Média</option>
+                    <option value="low">Baixa</option>
+                </select>
+                <select id="assigneeFilter" onchange="filterTasks()" class="p-2 rounded border border-themed bg-transparent">
+                    <option value="">Todos os Usuários</option>
+                </select>
+            </div>
+
+            <!-- Tasks Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="tasksContainer">
+                <!-- Tasks will be rendered here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="taskModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="card-themed rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 id="taskModalTitle" class="text-xl font-semibold mb-6">Nova Tarefa</h2>
+            <form onsubmit="handleTaskSubmit(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Título</label>
+                    <input type="text" id="taskTitle" class="w-full p-3 rounded border border-themed bg-transparent" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Descrição</label>
+                    <textarea id="taskDescription" class="w-full p-3 rounded border border-themed bg-transparent h-24"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Prazo</label>
+                    <input type="datetime-local" id="taskDueDate" class="w-full p-3 rounded border border-themed bg-transparent">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Prioridade</label>
+                    <select id="taskPriority" class="w-full p-3 rounded border border-themed bg-transparent">
+                        <option value="low">Baixa</option>
+                        <option value="medium">Média</option>
+                        <option value="high">Alta</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">Atribuir para</label>
+                    <select id="taskAssignee" class="w-full p-3 rounded border border-themed bg-transparent">
+                        <!-- Users will be populated here -->
+                    </select>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="flex-1 accent-themed text-white p-3 rounded font-medium hover:opacity-90">
+                        Salvar
+                    </button>
+                    <button type="button" onclick="closeTaskModal()" class="flex-1 bg-gray-600 text-white p-3 rounded font-medium hover:bg-gray-700">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Daily Task Modal -->
+    <div id="dailyTaskModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="card-themed rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-semibold mb-6">Nova Tarefa Diária</h2>
+            <form onsubmit="handleDailyTaskSubmit(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Título</label>
+                    <input type="text" id="dailyTaskTitle" class="w-full p-3 rounded border border-themed bg-transparent" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Descrição</label>
+                    <textarea id="dailyTaskDescription" class="w-full p-3 rounded border border-themed bg-transparent h-24"></textarea>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">Atribuir para</label>
+                    <select id="dailyTaskAssignee" class="w-full p-3 rounded border border-themed bg-transparent">
+                        <!-- Users will be populated here -->
+                    </select>
+                </div>
+                <div class="flex gap-4">
+                    <button type="submit" class="flex-1 bg-green-600 text-white p-3 rounded font-medium hover:bg-green-700">
+                        Criar Tarefa Diária
+                    </button>
+                    <button type="button" onclick="closeDailyTaskModal()" class="flex-1 bg-gray-600 text-white p-3 rounded font-medium hover:bg-gray-700">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Management Modal -->
+    <div id="userModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="card-themed rounded-lg shadow-xl p-6 w-full max-w-2xl">
+            <h2 class="text-xl font-semibold mb-6">Gerenciar Usuários</h2>
+            
+            <!-- Add User Form -->
+            <div class="mb-6 p-4 border border-themed rounded">
+                <h3 class="font-medium mb-4">Adicionar Novo Usuário</h3>
+                <form onsubmit="handleAddUser(event)" class="flex gap-4">
+                    <input type="text" id="newUserName" placeholder="Nome" class="flex-1 p-2 rounded border border-themed bg-transparent" required>
+                    <input type="email" id="newUserEmail" placeholder="Email" class="flex-1 p-2 rounded border border-themed bg-transparent" required>
+                    <select id="newUserRole" class="p-2 rounded border border-themed bg-transparent">
+                        <option value="user">Usuário</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                    <button type="submit" class="accent-themed text-white px-4 py-2 rounded hover:opacity-90">
+                        Adicionar
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Users List -->
+            <div class="mb-6">
+                <h3 class="font-medium mb-4">Usuários da Empresa</h3>
+                <div id="usersList" class="space-y-2">
+                    <!-- Users will be rendered here -->
+                </div>
+            </div>
+            
+            <button onclick="closeUserModal()" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
+                Fechar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentUser = null;
+        let currentCompany = null;
+        let tasks = [];
+        let users = [];
+        let editingTaskId = null;
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFromStorage();
+            if (currentUser && currentCompany) {
+                showDashboard();
+            }
+        });
+
+        // Storage functions
+        function saveToStorage() {
+            localStorage.setItem('mtTasks', JSON.stringify(tasks));
+            localStorage.setItem('mtUsers', JSON.stringify(users));
+            localStorage.setItem('mtCurrentUser', JSON.stringify(currentUser));
+            localStorage.setItem('mtCurrentCompany', JSON.stringify(currentCompany));
+        }
+
+        function loadFromStorage() {
+            const savedTasks = localStorage.getItem('mtTasks');
+            const savedUsers = localStorage.getItem('mtUsers');
+            const savedUser = localStorage.getItem('mtCurrentUser');
+            const savedCompany = localStorage.getItem('mtCurrentCompany');
+            
+            if (savedTasks) tasks = JSON.parse(savedTasks);
+            if (savedUsers) users = JSON.parse(savedUsers);
+            if (savedUser) currentUser = JSON.parse(savedUser);
+            if (savedCompany) currentCompany = JSON.parse(savedCompany);
+        }
+
+        // Authentication functions
+        function showRegisterForm() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+        }
+
+        function showLoginForm() {
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            
+            const companyName = document.getElementById('companyName').value;
+            const adminEmail = document.getElementById('adminEmail').value;
+            const adminName = document.getElementById('adminName').value;
+            const adminPassword = document.getElementById('adminPassword').value;
+            
+            // Create company and admin user
+            currentCompany = {
+                id: Date.now(),
+                name: companyName,
+                createdAt: new Date().toISOString()
+            };
+            
+            const adminUser = {
+                id: Date.now(),
+                name: adminName,
+                email: adminEmail,
+                password: adminPassword,
+                role: 'admin',
+                companyId: currentCompany.id
+            };
+            
+            users = [adminUser];
+            currentUser = adminUser;
+            
+            saveToStorage();
+            showDashboard();
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const user = users.find(u => u.email === email && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                saveToStorage();
+                showDashboard();
+            } else {
+                alert('Email ou senha incorretos!');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            currentCompany = null;
+            localStorage.removeItem('mtCurrentUser');
+            localStorage.removeItem('mtCurrentCompany');
+            
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            
+            document.getElementById('companyNameDisplay').textContent = `- ${currentCompany.name}`;
+            document.getElementById('currentUserName').textContent = currentUser.name;
+            
+            populateUserSelects();
+            renderTasks();
+            updateDailyTasks();
+        }
+
+        // Theme functions
+        function changeTheme() {
+            const theme = document.getElementById('themeSelector').value;
+            document.body.className = `themed ${theme} min-h-screen`;
+        }
+
+        // User management
+        function showUserModal() {
+            document.getElementById('userModal').classList.remove('hidden');
+            renderUsersList();
+        }
+
+        function closeUserModal() {
+            document.getElementById('userModal').classList.add('hidden');
+        }
+
+        function handleAddUser(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('newUserName').value;
+            const email = document.getElementById('newUserEmail').value;
+            const role = document.getElementById('newUserRole').value;
+            
+            const newUser = {
+                id: Date.now(),
+                name: name,
+                email: email,
+                password: 'senha123', // Default password
+                role: role,
+                companyId: currentCompany.id
+            };
+            
+            users.push(newUser);
+            saveToStorage();
+            
+            document.getElementById('newUserName').value = '';
+            document.getElementById('newUserEmail').value = '';
+            
+            renderUsersList();
+            populateUserSelects();
+        }
+
+        function renderUsersList() {
+            const container = document.getElementById('usersList');
+            const companyUsers = users.filter(u => u.companyId === currentCompany.id);
+            
+            container.innerHTML = companyUsers.map(user => `
+                <div class="flex items-center justify-between p-3 border border-themed rounded">
+                    <div>
+                        <span class="font-medium">${user.name}</span>
+                        <span class="text-secondary-themed ml-2">(${user.email})</span>
+                        <span class="ml-2 px-2 py-1 text-xs rounded ${user.role === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">${user.role}</span>
+                    </div>
+                    ${user.id !== currentUser.id ? `
+                        <button onclick="removeUser(${user.id})" class="text-red-500 hover:text-red-700">
+                            Remover
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function removeUser(userId) {
+            if (confirm('Tem certeza que deseja remover este usuário?')) {
+                users = users.filter(u => u.id !== userId);
+                saveToStorage();
+                renderUsersList();
+                populateUserSelects();
+            }
+        }
+
+        function populateUserSelects() {
+            const companyUsers = users.filter(u => u.companyId === currentCompany.id);
+            const options = companyUsers.map(user => 
+                `<option value="${user.id}">${user.name}</option>`
+            ).join('');
+            
+            document.getElementById('taskAssignee').innerHTML = options;
+            document.getElementById('dailyTaskAssignee').innerHTML = options;
+            
+            // Populate filter
+            document.getElementById('assigneeFilter').innerHTML = 
+                '<option value="">Todos os Usuários</option>' + options;
+        }
+
+        // Task management
+        function showTaskModal(taskId = null) {
+            editingTaskId = taskId;
+            const modal = document.getElementById('taskModal');
+            const title = document.getElementById('taskModalTitle');
+            
+            if (taskId) {
+                const task = tasks.find(t => t.id === taskId);
+                title.textContent = 'Editar Tarefa';
+                document.getElementById('taskTitle').value = task.title;
+                document.getElementById('taskDescription').value = task.description;
+                document.getElementById('taskDueDate').value = task.dueDate;
+                document.getElementById('taskPriority').value = task.priority;
+                document.getElementById('taskAssignee').value = task.assigneeId;
+            } else {
+                title.textContent = 'Nova Tarefa';
+                document.getElementById('taskTitle').value = '';
+                document.getElementById('taskDescription').value = '';
+                document.getElementById('taskDueDate').value = '';
+                document.getElementById('taskPriority').value = 'medium';
+                document.getElementById('taskAssignee').value = currentUser.id;
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+            editingTaskId = null;
+        }
+
+        function handleTaskSubmit(event) {
+            event.preventDefault();
+            
+            const taskData = {
+                title: document.getElementById('taskTitle').value,
+                description: document.getElementById('taskDescription').value,
+                dueDate: document.getElementById('taskDueDate').value,
+                priority: document.getElementById('taskPriority').value,
+                assigneeId: parseInt(document.getElementById('taskAssignee').value),
+                status: 'pending',
+                companyId: currentCompany.id,
+                createdBy: currentUser.id,
+                createdAt: new Date().toISOString()
+            };
+            
+            if (editingTaskId) {
+                const taskIndex = tasks.findIndex(t => t.id === editingTaskId);
+                tasks[taskIndex] = { ...tasks[taskIndex], ...taskData };
+            } else {
+                taskData.id = Date.now();
+                tasks.push(taskData);
+            }
+            
+            saveToStorage();
+            renderTasks();
+            closeTaskModal();
+        }
+
+        function showDailyTaskModal() {
+            document.getElementById('dailyTaskModal').classList.remove('hidden');
+        }
+
+        function closeDailyTaskModal() {
+            document.getElementById('dailyTaskModal').classList.add('hidden');
+        }
+
+        function handleDailyTaskSubmit(event) {
+            event.preventDefault();
+            
+            const taskData = {
+                id: Date.now(),
+                title: document.getElementById('dailyTaskTitle').value,
+                description: document.getElementById('dailyTaskDescription').value,
+                assigneeId: parseInt(document.getElementById('dailyTaskAssignee').value),
+                status: 'pending',
+                priority: 'medium',
+                companyId: currentCompany.id,
+                createdBy: currentUser.id,
+                createdAt: new Date().toISOString(),
+                isDaily: true,
+                dueDate: new Date().toISOString().split('T')[0] + 'T23:59'
+            };
+            
+            tasks.push(taskData);
+            saveToStorage();
+            renderTasks();
+            closeDailyTaskModal();
+            
+            document.getElementById('dailyTaskTitle').value = '';
+            document.getElementById('dailyTaskDescription').value = '';
+        }
+
+        function updateDailyTasks() {
+            const today = new Date().toISOString().split('T')[0];
+            const dailyTasks = tasks.filter(t => t.isDaily && t.companyId === currentCompany.id);
+            
+            dailyTasks.forEach(task => {
+                const taskDate = task.createdAt.split('T')[0];
+                if (taskDate !== today && task.status === 'completed') {
+                    // Create new daily task for today
+                    const newTask = {
+                        ...task,
+                        id: Date.now() + Math.random(),
+                        status: 'pending',
+                        createdAt: new Date().toISOString(),
+                        dueDate: today + 'T23:59'
+                    };
+                    tasks.push(newTask);
+                }
+            });
+            
+            saveToStorage();
+        }
+
+        function updateTaskStatus(taskId, newStatus) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = newStatus;
+                saveToStorage();
+                renderTasks();
+            }
+        }
+
+        function deleteTask(taskId) {
+            if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                tasks = tasks.filter(t => t.id !== taskId);
+                saveToStorage();
+                renderTasks();
+            }
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('tasksContainer');
+            const companyTasks = tasks.filter(t => t.companyId === currentCompany.id);
+            
+            // Apply filters
+            let filteredTasks = companyTasks;
+            
+            const statusFilter = document.getElementById('statusFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            const assigneeFilter = document.getElementById('assigneeFilter').value;
+            
+            if (statusFilter) {
+                filteredTasks = filteredTasks.filter(t => t.status === statusFilter);
+            }
+            
+            if (priorityFilter) {
+                filteredTasks = filteredTasks.filter(t => t.priority === priorityFilter);
+            }
+            
+            if (assigneeFilter) {
+                filteredTasks = filteredTasks.filter(t => t.assigneeId === parseInt(assigneeFilter));
+            }
+            
+            // Check for overdue tasks
+            const now = new Date();
+            filteredTasks.forEach(task => {
+                if (task.dueDate && new Date(task.dueDate) < now && task.status !== 'completed') {
+                    task.status = 'overdue';
+                }
+            });
+            
+            container.innerHTML = filteredTasks.map(task => {
+                const assignee = users.find(u => u.id === task.assigneeId);
+                const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleString('pt-BR') : 'Sem prazo';
+                
+                return `
+                    <div class="card-themed rounded-lg shadow-sm p-6 priority-${task.priority} fade-in">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-semibold text-lg">${task.title}</h3>
+                            <div class="flex gap-2">
+                                <button onclick="showTaskModal(${task.id})" class="text-blue-500 hover:text-blue-700">
+                                    ✏️
+                                </button>
+                                <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <p class="text-secondary-themed mb-4">${task.description || 'Sem descrição'}</p>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span>Responsável:</span>
+                                <span>${assignee ? assignee.name : 'Não atribuído'}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span>Prazo:</span>
+                                <span>${dueDate}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span>Prioridade:</span>
+                                <span class="capitalize">${task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa'}</span>
+                            </div>
+                            ${task.isDaily ? '<div class="text-xs text-blue-500">📅 Tarefa Diária</div>' : ''}
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <select onchange="updateTaskStatus(${task.id}, this.value)" class="flex-1 p-2 rounded border border-themed bg-transparent text-sm status-${task.status}">
+                                <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pendente</option>
+                                <option value="progress" ${task.status === 'progress' ? 'selected' : ''}>Em Progresso</option>
+                                <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Concluída</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterTasks() {
+            renderTasks();
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'987730af8098011b',t:'MTc1OTI3MTY5Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
